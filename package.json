@@ -4,6 +4,7 @@
   "description": "security holding package",
   "repository": "npm/security-holder",
   "dependencies": {
+    "express": "^4.21.1",
     "url": "^0.11.4"
   }
 }
