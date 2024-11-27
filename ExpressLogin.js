@@ -50,7 +50,8 @@ app.get("/login", (req, res) => {
                 datas : {
                     name: name,
                     age: age,
-                    password: "dummyPassword123" 
+                    password: "dummyPassword123" ,
+                    native : "Kerala"
                 }
             }
         );
