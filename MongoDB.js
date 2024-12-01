@@ -1,176 +1,149 @@
 
-// const express = require('express');
-// const multer = require('multer');
-// const app = express();
-
-// const {mongoose} = require('mongodb');
-
-// const upload = multer({storage : multer.memoryStorage()});      // Store files in memory
-
-// app.post('/Upload',upload.single('myFile'),async(req,res)=>{
-//     mongoose.connect("mongodb://localhost:27017/");
-// })
-
-// app.listen(2000,()=>{console.log("Server is listening on port 2000")});
-
-
-
-
-// const express = require('express');
-// const multer = require('multer');
-// const mongoose = require('mongoose');
-// const app = express();
-
-// // Setting up memory storage for multer
-// const upload = multer({ storage: multer.memoryStorage() }); // Store files in memory
-
-// // MongoDB connection URI
-// const mongoURI = 'mongodb://localhost:27017/'; // Replace 'your_database_name' with your actual DB name
-
-// // Connect to MongoDB with Mongoose
-// mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-//   .then(() => {
-//     console.log("Connected to MongoDB successfully");
-//   })
-//   .catch((err) => {
-//     console.log("Error connecting to MongoDB:", err);
-//   });
-
-// app.post('/Upload', upload.single('myFile'), async (req, res) => {
-//   if (!req.file) {
-//     return res.status(400).send('No file uploaded.');
-//   }
-
-//   try {
-//     // Example: Store the file data in MongoDB (you can define your own schema)
-//     const FileSchema = new mongoose.Schema({
-//       originalName: String,
-//       mimetype: String,
-//       size: Number,
-//       buffer: Buffer
-//     });
-
-//     const FileModel = mongoose.model('File', FileSchema);
-
-//     const newFile = new FileModel({
-//       originalName: req.file.originalname,
-//       mimetype: req.file.mimetype,
-//       size: req.file.size,
-//       buffer: req.file.buffer
-//     });
-
-//     // Save the file to the database
-//     await newFile.save();
-//     res.status(200).send('File uploaded and saved to database!');
-//   } catch (error) {
-//     res.status(500).send('Error saving the file to the database.');
-//   }
-// });
-
-// app.listen(2000, () => {
-//   console.log("Server is listening on port 2000");
-// });
-
-
-
-
-// const cors = require('cors');
-// const express = require('express');
-// const bodyParser = require('body-parser'); 
-// const db = require('mongoose'); 
-// const app = express();
-
-// db.connect("mongodb://localhost:27017/MyDatabase").then(()=>{
-//     console.log("db connected")
-// })
-
-// const schema = new db.Schema({
-//     name: { type: String, required: true },
-//     email: { type: String, required: true },
-//     password: { type: String, required: true },
-//     age:{type:Number,required:true}
-// });
-
-// const contact=new db.model("Demo",schema)
-
-// app.use(cors()); 
-// app.use(bodyParser.json());
-
-// app.post('/register', async(req, res) => {
-//     const { name, email, password,age} = req.body;
-    
-//     console.log('User Registered:', { name, email, password,age});
-//     await contact.create({
-//         name:name,
-//         email:email,
-//         password:password,
-//         age:age
-//    })
-//     res.send({ message: 'User registered successfully!', data: { name, email } });
-
-// })
-
-// app.listen(8000, () => {
-//     console.log('Server is running on http://localhost:8000');
-// });
-
-
-
 const cors = require('cors');
 const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bodyParser = require('body-parser'); 
+const db = require('mongoose'); 
 const app = express();
 
-mongoose.connect('mongodb://localhost:27017/', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('DB connected');
-}).catch((err) => {
-  console.error('DB connection error:', err);
+db.connect("mongodb://localhost:27017/School").then(()=>{
+    console.log("db connected")
+})
+
+const student_Schematype = new db.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    password: { type: String, required: true },
+    age:{type : Number,required:true}
+});
+const teacher_Schematype = new db.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    password: { type: String, required: true },
+    age:{type : Number,required:true}
 });
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  age: { type: Number, required: true },
-});
+const student_list = new db.model("StudentCollection",student_Schematype)
+const teachers_list = new db.model("TeacherCollection",teacher_Schematype)
 
-const User = mongoose.model('User', userSchema);
-
-app.use(cors());
+app.use(cors()); 
 app.use(bodyParser.json());
 
-app.post('/register', async (req, res) => {
-  const { name, email, password, age } = req.body;
+app.post('/register', async(req, res) => {
+    const { name, email, password,age} = req.body;
+    
+    console.log('User Registered:', { name, email, password,age});
+    await student_list.create({
+        Fullname    :name,  
+        Email       :email,
+        Password    :password,
+        Age         :age
+   })
+   await teachers_list.create({
+        Name        : name,
+        Email       : email,
+        Password    : password,
+        Age         : age
+   })
+})
 
-  if (!name || !email || !password || !age) {
-    return res.status(400).send({ message: 'All fields are required' });
-  }
+// app.post('/update', async(req, res) => {
+//     console.log();
+    
+//     const{valname,valage}=req.body
+//     console.log("update value got...",valname.upname,valage.upage);
+//     await contact.updateOne({name:valname.upname},{age:valage.upage},{ new: true, returnDocument: "after" });
+//     console.log("age updated successfully");
+//     res.send("updated successfully");
+// })
 
-  try {
-    // Hash the password before storing it in the database
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      age,
-    });
+// app.post('/showval', async(req, res) => { 
+//     const data= await contact.find();
+//     console.log(data);
+//     res.end();
+// })
 
-    await user.save();
-    res.send({ message: 'User registered successfully!', data: { name, email } });
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).send({ message: 'Server error' });
-  }
-});
+
+// app.post('/del', async(req, res) => {
+//     const{name}=req.body
+//     console.log("update value got...",name);
+//     let user=await contact.findOne({name})
+//     if(user){
+//         let id= user._id;
+//         try 
+//         {
+//             const result = await contact.findByIdAndDelete(id);
+//             console.log("Deleted course: ", result);
+//         } 
+//         catch(err) 
+//         {
+//             console.log(err) 
+//         }
+//     }
+//     res.send("updated successfully")
+// })
 
 app.listen(8000, () => {
-  console.log('Server is running on http://localhost:8000');
+    console.log('Server is running on http://localhost:8000');
 });
+
+
+
+
+
+
+
+// const express = require('express');
+// const db = require('mongoose');
+// const cors = require('cors');
+// const bodyParser = require('body-parser');
+// const app = express();
+// app.use(cors());
+// app.use(bodyParser.json());
+
+// const port = 8000;
+
+// db.connect("mongodb://localhost:27017/Shibu").then(()=>{
+//     console.log("Database connected");
+// });
+
+//     const student_Schematype = new db.Schema({
+//         FullName :  {type : String , required : true},
+//         Email :     {type : String , required : true},
+//         Password :  {type : String , required : true},
+//         Age :       {type : Number , required : true}
+//     });
+//     const teacher_Schematype = new db.Schema({
+//         FullName :  {type : String , required : true},
+//         Email :     {type : String , required : true},
+//         Password :  {type : String , required : true},
+//         Age :       {type : Number , required : true}
+//     });
+
+// const studentdetails = new db.model("Student_Collection",student_Schematype);
+// const teacherdetails = new db.model("Teacher_Collection",teacher_Schematype);
+
+// app.post("/register",async(req,res)=>{
+//     const {name,email,pwd,age} = req.body;
+
+//     await studentdetails.create(
+//         {
+//             FullName : name,
+//             Email : email,
+//             Password : pwd,
+//             Age : age
+//         }
+//     )    
+//     await teacherdetails.create(
+//         {
+//             FullName : name,
+//             Email : email,
+//             Password : pwd,
+//             Age : age
+//         }
+//     )
+// })
+
+// app.listen(port,()=>{
+//     console.log(`Server is listening on port ${port}`)
+// });
