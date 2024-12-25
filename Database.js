@@ -80,70 +80,120 @@
 
 
 
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+// const express = require("express");
+// const mongoose = require("mongoose");
+// const cors = require("cors");
+
+// const app = express();
+
+// app.use(express.json());
+// app.use(cors());
+
+// mongoose.connect("mongodb://localhost:27017/Lfmsians")
+//   .then(() => console.log("Successfully connected to MongoDB.."))
+//   .catch((err) => console.log("MongoDB connection error:", err));
+
+// const studentDataSchema = new mongoose.Schema({
+//     name: { type: String, required: true },
+//     age: { type: Number, required: true }
+// });
+
+// const Data = mongoose.model("Studentnamelist", studentDataSchema);
+
+// app.post("/insertdatas", (req, res) => {
+//     const { name, age } = req.body;
+//     try {
+//         const newData = new Data({ name, age });
+//         newData.save();
+//         res.status(200).json({ message: "Data inserted successfully" });
+//     } catch (error) {
+//         res.status(500).json({ message: "Error inserting data", error });
+//     }
+// });
+
+// app.get("/getdatas", async (req, res) => {
+//     try {
+//         const totalData = await Data.find();
+//         res.status(200).json({ totaldatas: totalData });
+//     } catch (err) {
+//         res.status(500).json({ message: "Fetching error", error: err });
+//     }
+// });
+
+// app.delete("/deletedatas/:val", async (req,res) => {
+//     try{
+//         const {val} = req.params;
+//         await Data.findByIdAndDelete(val);
+//         res.status(200).json({message : "Datas deleted.."});
+//     }
+//     catch(err){
+//         res.status(500).json({message : "Error occured for deletion"});
+//     }
+// });
+
+// app.put("/updatedatas/:updval",async (req,res)=>{
+//     try{
+//         const {updval} = req.params;
+//         const {name,age} = req.body;
+//         await Data.findByIdAndUpdate(updval,{name,age});
+//         res.status(200).json({message:"Datas updated"});
+//     }
+//     catch{
+//         res.status(500).json({message:"Error occured for updation"});
+//     }
+// });
+  
+
+// app.listen(1122, () => {
+//     console.log(`Server is running on http://localhost:1122`);
+// });
+
+
+
+
+
+
+const express = require('express');
+const mongoose = require('mongoose');
+const multer = require('multer');
+const cors = require('cors');
+const { GridFsStorage } = require('multer-gridfs-storage');
+const gridfsStream = require('gridfs-stream');
+const path = require('path');
 
 const app = express();
 
-app.use(express.json());
 app.use(cors());
 
 mongoose.connect("mongodb://localhost:27017/Lfmsians")
   .then(() => console.log("Successfully connected to MongoDB.."))
   .catch((err) => console.log("MongoDB connection error:", err));
 
-const studentDataSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    age: { type: Number, required: true }
+// Create a storage engine using GridFS
+const storage = new GridFsStorage({
+  url: "mongodb://localhost:27017/Lfmsians",
+  file: (req, file) => {
+    return {
+      bucketName: 'images',  // name of the collection
+      filename: `${Date.now()}_${file.originalname}`
+    };
+  }
+});
+const upload = multer({ storage });
+
+// Create the backend API to upload images
+app.post('/upload', upload.single('file'), (req, res) => {
+  res.json({ file: req.file });
 });
 
-const Data = mongoose.model("Studentnamelist", studentDataSchema);
-
-app.post("/insertdatas", (req, res) => {
-    const { name, age } = req.body;
-    try {
-        const newData = new Data({ name, age });
-        newData.save();
-        res.status(200).json({ message: "Data inserted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: "Error inserting data", error });
-    }
+// API to fetch image from GridFS
+app.get('/image/:filename', (req, res) => {
+  const { filename } = req.params;
+  const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+    bucketName: 'images'
+  });
+  const downloadStream = bucket.openDownloadStreamByName(filename);
+  downloadStream.pipe(res);
 });
 
-app.get("/getdatas", async (req, res) => {
-    try {
-        const totalData = await Data.find();
-        res.status(200).json({ totaldatas: totalData });
-    } catch (err) {
-        res.status(500).json({ message: "Fetching error", error: err });
-    }
-});
-
-app.delete("/deletedatas/:val", async (req,res) => {
-    try{
-        const {val} = req.params;
-        await Data.findByIdAndDelete(val);
-        res.status(200).json({message : "Datas deleted.."});
-    }
-    catch(err){
-        res.status(500).json({message : "Error occured for deletion"});
-    }
-});
-
-app.put("/updatedatas/:updval",async (req,res)=>{
-    try{
-        const {updval} = req.params;
-        const {name,age} = req.body;
-        await Data.findByIdAndUpdate(updval,{name,age});
-        res.status(200).json({message:"Datas updated"});
-    }
-    catch{
-        res.status(500).json({message:"Error occured for updation"});
-    }
-});
-  
-
-app.listen(1122, () => {
-    console.log(`Server is running on http://localhost:1122`);
-});
+app.listen(5000, () => { console.log(`Server running on port 5000`); });
